@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WAREHOUSE 3D | K3 Risk Simulation</title>
+<style>
+:root{
+ --bg:#07111d;--panel:rgba(12,25,41,.94);--panel2:#12263b;--line:rgba(144,178,207,.2);
+ --text:#edf5fc;--muted:#9eb3c8;--cyan:#57d5e8;--amber:#ffb547;--red:#ff5d66;--green:#58d6a0;
+}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+#app{position:relative;width:100%;height:100%;isolation:isolate}
+#viewport{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 38%,#203b51 0%,#0b1928 60%,#07111d 100%)}
+canvas{display:block;width:100%;height:100%;outline:none}
+.topbar{position:absolute;z-index:5;left:18px;right:18px;top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
+.brand,.top-actions{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:12px;padding:10px 15px;border:1px solid var(--line);border-radius:14px;background:rgba(8,20,33,.82);backdrop-filter:blur(16px);box-shadow:0 10px 35px #0004}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(145deg,#42d5e7,#2275a5);display:grid;place-items:center;color:#071522;font-weight:900;font-size:19px}
+.brand h1{font-size:15px;letter-spacing:1.2px;margin:0}.brand p{font-size:10px;color:var(--muted);margin:3px 0 0;letter-spacing:1.4px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ui-btn{border:1px solid var(--line);background:rgba(10,25,41,.88);color:var(--text);padding:10px 13px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;backdrop-filter:blur(12px);transition:.2s}
+.ui-btn:hover,.ui-btn.active{border-color:#54cfe2;background:#173d52}.ui-btn.primary{background:#176b83;border-color:#41bfd4}
+.left-tools{position:absolute;z-index:4;left:18px;top:92px;display:flex;flex-direction:column;gap:8px}
+.tool{width:43px;height:43px;border:1px solid var(--line);border-radius:12px;background:rgba(9,23,38,.88);color:#dcebf5;cursor:pointer;font-size:17px;backdrop-filter:blur(10px)}
+.tool:hover,.tool.active{background:#15536b;border-color:#54d2e5}
+.statusbar{position:absolute;z-index:4;left:18px;bottom:18px;display:flex;gap:8px;flex-wrap:wrap}
+.stat{padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(8,20,33,.84);backdrop-filter:blur(12px);min-width:105px}
+.stat small{display:block;color:var(--muted);font-size:9px;letter-spacing:1px;text-transform:uppercase}.stat b{font-size:14px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--green);box-shadow:0 0 9px currentColor}
+.right-panel{position:absolute;z-index:5;right:18px;top:88px;bottom:18px;width:350px;max-width:calc(100vw - 36px);display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.card{pointer-events:auto;background:var(--panel);border:1px solid var(--line);border-radius:15px;backdrop-filter:blur(18px);box-shadow:0 15px 45px #0005;overflow:hidden}
+.card-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.eyebrow{font-size:9px;color:var(--cyan);font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+.card-head h2{margin:4px 0 0;font-size:17px}
+.live{font-size:9px;color:var(--green);font-weight:800;letter-spacing:1px}
+.detail{padding:15px 16px 16px;overflow:auto}
+.zone-tag{display:inline-flex;padding:5px 9px;border-radius:30px;background:#273e51;color:#bdebf2;font-size:10px;font-weight:800;letter-spacing:.7px;margin-bottom:10px}
+.detail h3{font-size:20px;margin:0 0 10px}
+.field{margin-top:12px}.field label{display:block;color:#83a2bc;font-size:9px;letter-spacing:1.1px;text-transform:uppercase;font-weight:800;margin-bottom:4px}
+.field p{margin:0;color:#e6eff7;font-size:12px;line-height:1.5}
+.impact{border-left:3px solid var(--red);background:rgba(255,93,102,.09);padding:9px 11px;border-radius:0 8px 8px 0;margin-top:13px}
+.risk-level{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.risk-level span{font-size:10px;color:var(--muted)}.risk-level b{font-size:11px;color:#ffb8a1}
+.action-row{display:flex;gap:7px;padding:0 15px 14px}
+.action-row button{flex:1}
+.bottom-panel{position:absolute;z-index:4;left:50%;transform:translateX(-50%);bottom:18px;width:min(590px,calc(100vw - 390px));pointer-events:auto;background:rgba(8,20,33,.88);border:1px solid var(--line);border-radius:14px;padding:10px 13px;backdrop-filter:blur(15px)}
+.timeline-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:10px;color:var(--muted)}
+.timeline-top b{color:#edf5fc;letter-spacing:.7px}
+.stages{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px}
+.stage{flex:1;min-width:40px;border:1px solid var(--line);background:#132a40;color:#b9ccdc;border-radius:7px;padding:7px 3px;cursor:pointer;font-size:10px;font-weight:800}
+.stage.active{background:#15566c;border-color:#58d5e8;color:#fff;box-shadow:0 0 14px #40bcd333}
+.hint{position:absolute;z-index:3;left:50%;top:83px;transform:translateX(-50%);padding:7px 12px;border-radius:30px;background:rgba(8,20,33,.68);border:1px solid var(--line);font-size:10px;color:#b7c9d8;white-space:nowrap;pointer-events:none}
+#tooltip{position:absolute;z-index:8;display:none;pointer-events:none;padding:7px 10px;background:#071522;border:1px solid #5acfe1;border-radius:8px;font-size:11px;color:#fff;box-shadow:0 8px 25px #0008}
+.overlay{position:absolute;z-index:10;inset:0;display:none;place-items:center;background:#030a12bb;backdrop-filter:blur(7px)}
+.overlay.show{display:grid}.modal{width:min(520px,calc(100vw - 30px));background:#102238;border:1px solid #34516b;border-radius:17px;padding:20px;box-shadow:0 25px 80px #0009}
+.modal h2{margin:0 0 8px;font-size:19px}.modal p{color:#b3c5d4;font-size:12px;line-height:1.6}.modal .ui-btn{margin-top:10px}
+@media(max-width:850px){.right-panel{width:310px;right:10px;top:85px;bottom:90px}.topbar{left:10px;right:10px}.brand{padding:8px}.brand h1{font-size:12px}.top-actions .ui-btn{padding:8px;font-size:10px}.left-tools{left:10px;top:85px}.bottom-panel{left:10px;transform:none;width:calc(100vw - 340px);bottom:12px}.hint{display:none}.statusbar{left:10px;bottom:70px}}
+@media(max-width:600px){.right-panel{top:auto;bottom:92px;left:10px;right:10px;width:auto;max-width:none;max-height:42vh}.detail{padding:10px 13px}.field{margin-top:7px}.detail h3{font-size:17px}.left-tools{top:78px}.bottom-panel{left:10px;right:10px;bottom:10px;width:auto}.statusbar{display:none}.top-actions .hide-mobile{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="viewport"></div>
+ <div class="topbar">
+  <div class="brand"><div class="logo">W</div><div><h1>WAREHOUSE 3D SIMULATOR</h1><p>OCCUPATIONAL HEALTH & SAFETY • DIGITAL TWIN CONCEPT</p></div></div>
+  <div class="top-actions">
+   <button class="ui-btn hide-mobile" id="btnLabels">◉ Label zona</button>
+   <button class="ui-btn hide-mobile" id="btnRisk">⚠ Heatmap risiko</button>
+   <button class="ui-btn" id="btnReset">↻ Reset view</button>
+   <button class="ui-btn primary" id="btnInfo">ⓘ Panduan</button>
+  </div>
+ </div>
+ <div class="left-tools">
+  <button class="tool active" id="camOrbit" title="Orbit camera">⟳</button>
+  <button class="tool" id="camTop" title="Tampak atas">▤</button>
+  <button class="tool" id="camIso" title="Isometrik">◈</button>
+  <button class="tool" id="toggleAnim" title="Pause / play simulasi">Ⅱ</button>
+ </div>
+ <div class="hint">DRAG: orbit • SCROLL: zoom • RIGHT-DRAG: pan • KLIK HOTSPOT: detail bahaya</div>
+ <div class="statusbar">
+  <div class="stat"><small><i class="dot"></i>System status</small><b>SIMULATION LIVE</b></div>
+  <div class="stat"><small>Active zones</small><b>10 / 10</b></div>
+  <div class="stat"><small>Material flow</small><b>Receiving → Shipping</b></div>
+ </div>
+ <div class="right-panel">
+  <section class="card">
+   <div class="card-head"><div><div class="eyebrow">Hazard identification / K3</div><h2>Operational risk monitor</h2></div><span class="live">● LIVE DATA</span></div>
+   <div class="detail">
+    <span class="zone-tag" id="zoneTag">ZONE 01 • RECEIVING</span>
+    <h3 id="activityTitle">Receiving</h3>
+    <div class="field"><label>Potensi bahaya / Hazard</label><p id="hazardText"></p></div>
+    <div class="field"><label>Risiko K3 / Occupational risk</label><p id="riskText"></p></div>
+    <div class="impact"><div class="field" style="margin:0"><label>Dampak terhadap pekerja</label><p id="impactText"></p></div></div>
+    <div class="risk-level"><span>Indicative hazard priority</span><b id="priorityText">HIGH • REVIEW REQUIRED</b></div>
+   </div>
+   <div class="action-row"><button class="ui-btn" id="prevZone">← Prev</button><button class="ui-btn primary" id="nextZone">Next zone →</button></div>
+  </section>
+  <section class="card" style="padding:12px 15px">
+   <div class="eyebrow">Visual legend</div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px;font-size:10px;color:#b8c9d8">
+    <span>🔴 Hazard hotspot</span><span>🟠 Forklift route</span><span>🔵 Material flow</span><span>🟢 Work zone</span>
+   </div>
+  </section>
+ </div>
+ <div class="bottom-panel"><div class="timeline-top"><b>WAREHOUSE PROCESS FLOW</b><span id="processCount">01 / 10</span></div><div class="stages" id="stageButtons"></div></div>
+ <div id="tooltip"></div>
+ <div class="overlay" id="helpOverlay"><div class="modal"><h2>Warehouse 3D — Panduan interaksi</h2><p>Simulasi ini menampilkan tata letak konseptual gudang dalam ruang 3D. Gunakan mouse untuk memutar kamera, scroll untuk memperbesar, dan klik marker bernomor di setiap zona untuk membuka identifikasi bahaya. Tombol tampak atas dan isometrik mengubah sudut kamera. Tombol heatmap menyorot zona berdasarkan prioritas ilustratif.</p><p><b>Catatan:</b> Model ini merupakan visualisasi pembelajaran, bukan digital twin tervalidasi. Skala, kapasitas rak, kecepatan forklift, waktu siklus, dan nilai risiko belum dikalibrasi dengan data fasilitas nyata.</p><button class="ui-btn primary" id="closeHelp">Mengerti</button></div></div>
+</div>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const data=[
+ {name:'Receiving',label:'Penerimaan barang',hazard:'Pergerakan forklift dan kendaraan pengangkut di area penerimaan barang.',risk:'Pekerja tertabrak atau terjepit kendaraan.',impact:'Memar, patah tulang, cedera berat, hingga kematian.',priority:'HIGH',pos:[-17,0,11]},
+ {name:'Unloading',label:'Pembongkaran barang',hazard:'Beban jatuh, material tidak stabil, dan aktivitas pengangkatan manual.',risk:'Pekerja tertimpa material atau mengalami cedera akibat pengangkatan beban.',impact:'Cedera punggung, bahu, tangan, dan kaki.',priority:'HIGH',pos:[-10,0,11]},
+ {name:'Put-away',label:'Penempatan barang',hazard:'Penempatan material pada rak bertingkat menggunakan peralatan pengangkat.',risk:'Barang jatuh akibat penempatan atau kondisi rak yang tidak aman.',impact:'Cedera kepala, patah tulang, dan trauma fisik.',priority:'HIGH',pos:[-3,0,6]},
+ {name:'Storage',label:'Penyimpanan',hazard:'Struktur rak rusak, mengalami deformasi, atau menerima beban melebihi kapasitas.',risk:'Rak mengalami deformasi atau runtuh dan material menimpa pekerja.',impact:'Pekerja tertimpa material dan mengalami cedera serius.',priority:'HIGH',pos:[5,0,6]},
+ {name:'Order picking',label:'Pengambilan pesanan',hazard:'Gerakan berulang, postur membungkuk, dan jangkauan berlebihan saat mengambil barang.',risk:'Gangguan muskuloskeletal (Musculoskeletal Disorders/MSDs).',impact:'Nyeri punggung, gangguan bahu, dan cedera otot.',priority:'MEDIUM',pos:[14,0,7]},
+ {name:'Material handling',label:'Pemindahan material',hazard:'Penggunaan hand pallet, conveyor, dan forklift untuk memindahkan barang.',risk:'Pekerja terjepit, tersangkut, atau tertabrak peralatan.',impact:'Luka, patah tulang, dan amputasi.',priority:'HIGH',pos:[-5,0,-3]},
+ {name:'Packing',label:'Pengemasan',hazard:'Bagian mesin bergerak dan aktivitas kerja berulang pada stasiun pengemasan.',risk:'Kontak dengan komponen mesin dan kelelahan otot.',impact:'Luka sayat, cedera tangan, dan MSDs.',priority:'MEDIUM',pos:[8,0,-10]},
+ {name:'Shipping',label:'Pengiriman barang',hazard:'Aktivitas bongkar muat pada area loading dock dan pergerakan kendaraan.',risk:'Pekerja jatuh dari dock atau tertabrak kendaraan.',impact:'Cedera kepala, patah tulang, dan cedera fatal.',priority:'HIGH',pos:[19,0,11]},
+ {name:'Maintenance',label:'Pemeliharaan',hazard:'Energi listrik, mekanis, hidraulik, dan pneumatik pada mesin atau peralatan.',risk:'Mesin aktif secara tidak terduga atau energi tersimpan terlepas saat pemeliharaan.',impact:'Sengatan listrik, luka bakar, terjepit, dan amputasi.',priority:'HIGH',pos:[17,0,-11]},
+ {name:'Automated warehousing',label:'Pergudangan otomatis',hazard:'Pergerakan robot dan sistem otomatisasi di area operasional.',risk:'Pekerja tertabrak atau terjepit robot.',impact:'Cedera akibat benturan dan kontak dengan komponen bergerak.',priority:'HIGH',pos:[-15,0,-11]}
+];
+
+const mount=document.getElementById('viewport');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1928);scene.fog=new THREE.Fog(0x0b1928,42,90);
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,150);camera.position.set(34,30,38);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;mount.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,0,0);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=18;controls.maxDistance=75;
+scene.add(new THREE.HemisphereLight(0xc5e5ff,0x35404a,2.1));
+const key=new THREE.DirectionalLight(0xffe5c1,3.1);key.position.set(-20,35,20);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-35;key.shadow.camera.right=35;key.shadow.camera.top=35;key.shadow.camera.bottom=-35;scene.add(key);
+const fill=new THREE.DirectionalLight(0x5db8e8,1.2);fill.position.set(25,18,-25);scene.add(fill);
+const mat=(color,rough=.72,metal=0)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
+const M={floor:mat(0x687982),concrete:mat(0x9aa8ac),yellow:mat(0xf0ad36),blue:mat(0x276b91),steel:mat(0x425b6a,.38,.55),rack:mat(0x3c6680,.55,.35),beam:mat(0xe59b35,.5,.2),pallet:mat(0x9a7048),box1:mat(0xc99a5a),box2:mat(0xb8c5c7),green:mat(0x23896c),red:mat(0xd94d4d),dark:mat(0x172c3c),glass:mat(0x8dc9df,.2,.2),white:mat(0xe5ecec)};
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(52,34),M.floor);floor.rotation.x=-Math.PI/2;floor.position.y=-.15;floor.receiveShadow=true;scene.add(floor);
+const grid=new THREE.GridHelper(52,52,0x8fa6b0,0x8399a4);grid.position.y=-.13;grid.material.transparent=true;grid.material.opacity=.16;scene.add(grid);
+function box(parent,x,y,z,w,h,d,material,cast=true){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y+h/2,z);o.castShadow=cast;o.receiveShadow=true;parent.add(o);return o}
+function cylinder(parent,x,y,z,r,h,material){let o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,16),material);o.position.set(x,y+h/2,z);o.castShadow=true;parent.add(o);return o}
+function labelSprite(text,color='#eaf6ff'){let can=document.createElement('canvas');can.width=512;can.height=128;let g=can.getContext('2d');g.fillStyle='rgba(6,20,32,.84)';g.beginPath();g.roundRect(5,5,502,118,22);g.fill();g.strokeStyle=color;g.lineWidth=5;g.stroke();g.fillStyle=color;g.font='bold 34px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText(text,256,65);let tex=new THREE.CanvasTexture(can);let s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));s.scale.set(5.2,1.3,1);return s}
+const zones=[];
+function zone(name,x,z,w,d,color=0x3d8792){let mesh=new THREE.Mesh(new THREE.BoxGeometry(w,.035,d),new THREE.MeshStandardMaterial({color,transparent:true,opacity:.18,roughness:1}));mesh.position.set(x,.01,z);mesh.receiveShadow=true;scene.add(mesh);let edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.06,d)),new THREE.LineBasicMaterial({color,transparent:true,opacity:.7}));edge.position.set(x,.02,z);scene.add(edge);let s=labelSprite(name,'#bdebf2');s.position.set(x,4.7,z-d/2+.8);scene.add(s);zones.push({mesh,edge,label:s});return mesh}
+zone('01 RECEIVING',-18,11,9,9,0x42a7bb);zone('02 UNLOADING',-9,11,8,9,0x42a7bb);zone('03 PUT-AWAY',-3,5,8,10,0x48a3a0);zone('04 STORAGE',6,5,10,11,0x48a3a0);zone('05 ORDER PICKING',15,6,8,10,0x48a3a0);zone('06 MATERIAL HANDLING',-5,-3,17,7,0x3e92bd);zone('07 PACKING',9,-10,11,8,0x42a77e);zone('08 SHIPPING',19,11,8,9,0x42a7bb);zone('09 MAINTENANCE',18,-11,8,7,0xd28b38);zone('10 AUTOMATION',-15,-11,10,8,0x9874ca);
+// perimeter walls and roof support columns
+for(let x=-25;x<=25;x+=10){box(scene,x,0,-16.8,.35,6,.35,M.steel);box(scene,x,0,16.8,.35,6,.35,M.steel)}
+for(let z=-16;z<=16;z+=8){box(scene,-25,0,z,.35,6,.35,M.steel);box(scene,25,0,z,.35,6,.35,M.steel)}
+// loading docks and truck trailer
+for(let i=0;i<3;i++){box(scene,18+i*2.3,0,15.7,1.7,3.2,.6,M.steel);box(scene,18+i*2.3,.2,15.25,1.7,.15,.12,M.yellow)}
+box(scene,20,0,19,5.5,3.3,2.8,M.white);box(scene,20,2.3,17.58,5.2,.8,.08,M.glass);for(let x of [18.4,21.6])cylinder(scene,x,.02,20,.48,.25,M.dark);
+// receiving pallets
+function pallet(x,z){box(scene,x,.05,z,1.45,.18,1.15,M.pallet);for(let i=0;i<3;i++)box(scene,x-.48+i*.48,.23,z,.12,.16,1.1,M.dark);box(scene,x,.42,z,1.18,.38,.95,M.box1);box(scene,x,.82,z,1.18,.38,.95,M.box2)}
+for(let i=0;i<4;i++)pallet(-20+i*2.2,10.5);
+// racks with uprights, beams, bracing, cartons
+function rackRow(x,z,length=8){for(let xx of [x-length/2,x-length/6,x+length/6,x+length/2]){box(scene,xx,0,z,.16,5.6,.18,M.rack);box(scene,xx,0,z-.16,.34,.14,.5,M.yellow);box(scene,xx,0,z+.16,.34,.14,.5,M.yellow)}
+for(let level=1;level<=3;level++){let y=level*1.65;box(scene,x,y,z,length,.13,.75,M.beam);box(scene,x,y+.12,z-.22,length,.08,.08,M.steel);for(let j=0;j<5;j++){box(scene,x-length/2+.9+j*1.5,y+.15,z,1.15,1.15,.62,j%2?M.box1:M.box2)}}
+for(let xx=x-length/2+.2;xx<x+length/2;xx+=2.6){let brace=new THREE.Mesh(new THREE.BoxGeometry(.07,3.9,.07),M.steel);brace.position.set(xx,2,z+.16);brace.rotation.z=.48;scene.add(brace)}
+}
+rackRow(-3,1,7);rackRow(5,1,8);rackRow(14,1,7);
+// picking shelves
+for(let i=0;i<3;i++){box(scene,13+i*1.7,0,10,.12,3.2,.12,M.steel);box(scene,13+i*1.7,1,10,1.5,.1,.65,M.beam);box(scene,13+i*1.7,2.1,10,1.5,.1,.65,M.beam);box(scene,13+i*1.7,1.15,10,1.15,.85,.55,M.box1);box(scene,13+i*1.7,2.25,10,1.15,.85,.55,M.box2)}
+// conveyor in material handling and packing
+function conveyor(x,z,length){box(scene,x,.85,z,length,.18,1.1,M.steel);for(let i=0;i<Math.floor(length/.55);i++){let r=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,1.05,12),M.dark);r.rotation.z=Math.PI/2;r.position.set(x-length/2+.25+i*.55,.75,z);r.castShadow=true;scene.add(r)}box(scene,x,.18,z-.48,length,.18,.12,M.yellow);box(scene,x,.18,z+.48,length,.18,.12,M.yellow)}
+conveyor(-5,-4,13);conveyor(9,-10,8);
+// packing tables
+for(let i=0;i<3;i++){box(scene,6+i*3,.95,-11,2.2,.18,1.3,M.blue);for(let dx of [-.85,.85])for(let dz of [-.45,.45])cylinder(scene,6+i*3+dx,.05,-11+dz,.07,.85,M.steel);pallet(6+i*3,-8.8)}
+// maintenance machine / electrical cabinet / LOTO
+box(scene,17,.1,-11,3.2,2.1,2.1,M.steel);box(scene,18.4,.5,-9.88,.7,1.2,.08,M.blue);box(scene,18.4,1.65,-9.82,.28,.28,.12,M.red);box(scene,21,.1,-12,1.2,2.8,.8,M.dark);box(scene,21,1,-11.55,.6,.55,.08,M.yellow);
+// safety fence around robot cell
+for(let x=-19;x<=-11;x+=2){box(scene,x,0,-13,.1,2.2,.1,M.yellow);box(scene,x,1.05,-13,1.9,.08,.1,M.yellow)}
+for(let z=-15;z<=-11;z+=2){box(scene,-19,0,z,.1,2.2,.1,M.yellow);box(scene,-11,0,z,.1,2.2,.1,M.yellow)}
+// robot arm
+const robot=new THREE.Group();robot.position.set(-15,.15,-11);scene.add(robot);cylinder(robot,0,0,0,.8,.35,M.steel);let arm1=box(robot,0,.45,0,.42,1.7,.42,M.red);arm1.rotation.z=-.35;let joint=new THREE.Mesh(new THREE.SphereGeometry(.32,20,16),M.yellow);joint.position.set(.28,1.2,0);robot.add(joint);let arm2=box(robot,.7,1.35,0,1.25,.25,.25,M.red);arm2.rotation.z=.35;let claw=box(robot,1.3,1.55,0,.25,.35,.25,M.steel);
+// workers with high-vis vest and hardhat
+function worker(x,z,scale=1){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);cylinder(g,0,.12,0,.19,.24,M.dark);let legs=box(g,-.12,.24,0,.13,.65,.15,M.blue);box(g,.12,.24,0,.13,.65,.15,M.blue);box(g,0,1.02,0,.55,.8,.3,M.yellow);box(g,0,1.05,.17,.42,.12,.03,M.white,false);cylinder(g,0,1.62,0,.22,.32,M.pallet);let head=new THREE.Mesh(new THREE.SphereGeometry(.22,16,12),mat(0xd5a47b));head.position.y=1.95;g.add(head);let hat=new THREE.Mesh(new THREE.SphereGeometry(.25,16,10,0,Math.PI*2,0,Math.PI/2),M.yellow);hat.position.y=2.08;g.add(hat);return g}
+const workers=[worker(-17,8),worker(-9,8),worker(14,8),worker(8,-8),worker(19,-8),worker(-12,-9)];
+// forklift model with animation path
+function makeForklift(){let g=new THREE.Group();box(g,0,.45,0,2.3,.75,1.35,M.yellow);box(g,-.15,1.05,0,1.1,.65,1.1,M.steel);box(g,-.15,1.08,.58,.8,.48,.04,M.glass);for(let x of [-.75,.75])for(let z of [-.62,.62]){let w=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.2,18),M.dark);w.rotation.x=Math.PI/2;w.position.set(x,.32,z);g.add(w)}box(g,1.13,1.15,0,.12,2.1,.15,M.steel);box(g,1.28,.18,0,.15,.12,1.25,M.steel);box(g,1.28,.55,0,.15,.12,1.25,M.steel);return g}
+const forklift=makeForklift();scene.add(forklift);
+// material flow arrows
+function arrow(x,z,rot=0){let a=new THREE.Group();let shaft=new THREE.Mesh(new THREE.BoxGeometry(2.1,.035,.09),new THREE.MeshBasicMaterial({color:0x43c6e4}));a.add(shaft);let head=new THREE.Mesh(new THREE.ConeGeometry(.22,.55,3),new THREE.MeshBasicMaterial({color:0x43c6e4}));head.rotation.z=-Math.PI/2;head.position.x=1.15;a.add(head);a.position.set(x,.16,z);a.rotation.y=rot;scene.add(a);return a}
+for(let x=-18;x<18;x+=5)arrow(x,14,0);for(let z=10;z>-7;z-=4)arrow(-7,z,Math.PI/2);
+// hotspot markers
+const hotspotGroup=new THREE.Group();scene.add(hotspotGroup);const hotspotMeshes=[];
+data.forEach((d,i)=>{let group=new THREE.Group();group.position.set(d.pos[0],.2,d.pos[2]);let ring=new THREE.Mesh(new THREE.TorusGeometry(.75,.075,8,32),new THREE.MeshBasicMaterial({color:0xff5964}));ring.rotation.x=-Math.PI/2;group.add(ring);let sphere=new THREE.Mesh(new THREE.SphereGeometry(.42,20,16),new THREE.MeshBasicMaterial({color:0xff5964}));sphere.position.y=.6;group.add(sphere);let canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;let cx=canvas.getContext('2d');cx.fillStyle='#ff5964';cx.beginPath();cx.arc(64,64,56,0,Math.PI*2);cx.fill();cx.fillStyle='#fff';cx.font='bold 62px Arial';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(String(i+1),64,65);let sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),depthTest:false}));sprite.scale.set(1.15,1.15,1);sprite.position.y=1.5;group.add(sprite);group.userData.index=i;hotspotGroup.add(group);hotspotMeshes.push(sphere)});
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let selected=0,paused=false,showLabels=true,heatmap=false;
+function choose(i){selected=(i+data.length)%data.length;let d=data[selected];document.getElementById('zoneTag').textContent=`ZONE ${String(selected+1).padStart(2,'0')} • ${d.name.toUpperCase()}`;document.getElementById('activityTitle').textContent=d.name;document.getElementById('hazardText').textContent=d.hazard;document.getElementById('riskText').textContent=d.risk;document.getElementById('impactText').textContent=d.impact;document.getElementById('priorityText').textContent=d.priority+' • REVIEW REQUIRED';document.getElementById('processCount').textContent=String(selected+1).padStart(2,'0')+' / 10';document.querySelectorAll('.stage').forEach((b,j)=>b.classList.toggle('active',j===selected));hotspotGroup.children.forEach((g,j)=>{g.scale.setScalar(j===selected?1.25:1);g.children[0].material.color.set(j===selected?0xffb547:0xff5964)})}
+const stageRoot=document.getElementById('stageButtons');data.forEach((d,i)=>{let b=document.createElement('button');b.className='stage';b.textContent=String(i+1).padStart(2,'0');b.title=d.name;b.onclick=()=>choose(i);stageRoot.appendChild(b)});
+document.getElementById('prevZone').onclick=()=>choose(selected-1);document.getElementById('nextZone').onclick=()=>choose(selected+1);
+renderer.domElement.addEventListener('pointerdown',e=>{let r=renderer.domElement.getBoundingClientRect();pointer.x=((e.clientX-r.left)/r.width)*2-1;pointer.y=-((e.clientY-r.top)/r.height)*2+1;raycaster.setFromCamera(pointer,camera);let hits=raycaster.intersectObjects(hotspotMeshes,false);if(hits.length){let idx=hotspotMeshes.indexOf(hits[0].object);if(idx>=0)choose(idx)}});
+document.getElementById('btnReset').onclick=()=>{camera.position.set(34,30,38);controls.target.set(0,0,0);controls.update()};
+function cameraPreset(p){if(p==='top'){camera.position.set(0,48,.01);controls.target.set(0,0,0)}else if(p==='iso'){camera.position.set(34,30,38);controls.target.set(0,0,0)}controls.update()}
+document.getElementById('camTop').onclick=()=>cameraPreset('top');document.getElementById('camIso').onclick=()=>cameraPreset('iso');
+document.getElementById('camOrbit').onclick=()=>{controls.enabled=!controls.enabled;document.getElementById('camOrbit').classList.toggle('active',controls.enabled)};
+document.getElementById('toggleAnim').onclick=()=>{paused=!paused;document.getElementById('toggleAnim').textContent=paused?'▶':'Ⅱ'};
+document.getElementById('btnLabels').onclick=()=>{showLabels=!showLabels;zones.forEach(z=>z.label.visible=showLabels);document.getElementById('btnLabels').classList.toggle('active',showLabels)};
+document.getElementById('btnRisk').onclick=()=>{heatmap=!heatmap;zones.forEach((z,i)=>{z.mesh.material.color.set(heatmap?(data[i].priority==='HIGH'?0xff4e59:0xffb547):0x3d8792);z.mesh.material.opacity=heatmap?.32:.18});document.getElementById('btnRisk').classList.toggle('active',heatmap)};
+document.getElementById('btnInfo').onclick=()=>document.getElementById('helpOverlay').classList.add('show');document.getElementById('closeHelp').onclick=()=>document.getElementById('helpOverlay').classList.remove('show');
+const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let t=clock.getElapsedTime();if(!paused){forklift.position.set(-22+(t*2.3%42),0,12);forklift.rotation.y=0;conveyorBox.position.x=-10+((t*1.2)%10);robot.rotation.y=Math.sin(t*1.1)*.3;hotspotGroup.children.forEach((g,i)=>{g.position.y=.2+Math.sin(t*2+i)*.08;g.children[0].scale.setScalar(1+.1*Math.sin(t*3+i))})}controls.update();renderer.render(scene,camera)}
+const conveyorBox=box(scene,-10,.95,-4,.8,.7,.7,M.box1);choose(0);animate();
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body></html>

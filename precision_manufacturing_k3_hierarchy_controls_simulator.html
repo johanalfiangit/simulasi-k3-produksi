@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Precision Manufacturing K3 Simulator</title>
+<style>
+:root{--bg:#091522;--panel:#0b1d2deF;--line:#35536a;--txt:#eef7fc;--muted:#abc0cf;--cyan:#55d5e8;--red:#ff626c;--green:#5bd8a3;--amber:#ffbd55}
+*{box-sizing:border-box}html,body,#view{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:Segoe UI,Arial;color:var(--txt)}canvas{display:block}
+header{position:absolute;z-index:3;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}.brand,header button{pointer-events:auto;background:#091b2beF;border:1px solid var(--line);border-radius:10px;padding:10px 13px}.brand b{font-size:13px;letter-spacing:1px}.brand small{display:block;color:var(--muted);font-size:9px}
+button{color:var(--txt);cursor:pointer;font-weight:700;font-size:10px}button:hover,button.active{border-color:var(--cyan);background:#17455a}.primary{background:#11657a!important}
+.panel{position:absolute;z-index:3;top:78px;bottom:82px;width:305px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;backdrop-filter:blur(12px);box-shadow:0 12px 36px #0006}.left{left:12px}.right{right:12px}
+h2{font-size:12px;letter-spacing:1px;margin:0 0 8px}h3{font-size:11px;margin:13px 0 6px;color:#dff5fa}p{font-size:10px;line-height:1.5;color:#c7d8e3;margin:6px 0}.muted{color:var(--muted)}
+.hoc{display:grid;grid-template-columns:24px 1fr;gap:7px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#10283a;margin:5px 0;cursor:pointer}.hoc.selected{border-color:var(--cyan);background:#16445a}.n{border-radius:6px;background:#244b60;display:grid;place-items:center;font-weight:bold}.hoc b{font-size:10px}.hoc small{display:block;color:var(--muted);font-size:9px}
+.info{padding:8px;border-left:3px solid var(--cyan);background:#102b3e;margin:8px 0;border-radius:0 7px 7px 0}.info.red{border-color:var(--red)}.info.green{border-color:var(--green)}.info.amber{border-color:var(--amber)}
+.action{display:block;width:100%;text-align:left;margin:4px 0;padding:8px;border:1px solid var(--line);background:#132c40;border-radius:7px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:6px}.kpi{background:#10283a;border:1px solid var(--line);padding:8px;border-radius:7px}.kpi small{display:block;color:var(--muted);font-size:8px}.kpi b{font-size:16px}
+.row{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}.row button{padding:8px;border:1px solid var(--line);background:#142e42;border-radius:7px}
+.steps{position:absolute;z-index:3;bottom:12px;left:12px;right:12px;display:flex;gap:5px;flex-wrap:wrap;background:#091b2beF;border:1px solid var(--line);border-radius:10px;padding:8px}.step{font-size:9px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted)}.step.active{background:#15516a;color:white;border-color:var(--cyan)}
+#toast{position:absolute;z-index:6;top:75px;left:50%;transform:translateX(-50%);padding:10px 16px;border-radius:9px;background:#16465a;border:1px solid var(--cyan);opacity:0;transition:.2s;font-size:11px;font-weight:bold;pointer-events:none}#toast.show{opacity:1}#toast.bad{background:#762832;border-color:var(--red)}#toast.good{background:#14583f;border-color:var(--green)}
+label{font-size:10px;color:var(--muted)}input{width:100%;accent-color:var(--cyan)}
+@media(max-width:760px){.panel{width:calc(50% - 16px);top:75px;bottom:145px;padding:8px}.left{left:8px}.right{right:8px}.brand small{display:none}header button{padding:7px;font-size:9px}.steps{bottom:6px;left:8px;right:8px}}
+</style></head><body>
+<div id="view"></div><div id="toast"></div>
+<header><div class="brand"><b>PRECISION MANUFACTURING • K3</b><small>HIERARCHY OF CONTROLS | CNC MACHINING & METROLOGY</small></div><div><button id="audio">🔇 Audio off</button> <button id="labels">◉ Labels</button> <button id="top">▤ Top view</button> <button id="resetView">↻ Reset view</button></div></header>
+<aside class="panel left">
+<h2>01 / HIERARCHY OF CONTROLS</h2><p>Urutan pengendalian paparan berdasarkan efektivitas. Pilih tingkat untuk melihat strategi dan contoh penerapan di area produksi presisi.</p>
+<div class="hoc selected" data-i="0"><span class="n">1</span><span><b>Elimination</b><small>Menghilangkan bahaya secara fisik</small></span></div>
+<div class="hoc" data-i="1"><span class="n">2</span><span><b>Substitution</b><small>Mengganti bahan atau proses berbahaya</small></span></div>
+<div class="hoc" data-i="2"><span class="n">3</span><span><b>Engineering Controls</b><small>Isolasi manusia dari sumber bahaya</small></span></div>
+<div class="hoc" data-i="3"><span class="n">4</span><span><b>Administrative Controls</b><small>Mengubah prosedur dan praktik kerja</small></span></div>
+<div class="hoc" data-i="4"><span class="n">5</span><span><b>Personal Protective Equipment</b><small>Perlindungan terakhir untuk risiko residual</small></span></div>
+<div class="info" id="hocText"></div>
+<h3>AKTIFKAN CONTOH PENGENDALIAN</h3><div id="actions"></div>
+<div class="info amber"><b>Prinsip penting</b><p>Eliminasi dan substitusi diprioritaskan. Bila bahaya belum dapat dihilangkan, terapkan engineering dan administrative controls. PPE melengkapi, bukan menggantikan, pengendalian yang lebih efektif. Kombinasi kontrol dapat diperlukan.</p></div>
+</aside>
+<aside class="panel right">
+<h2>02 / PROSES PRODUKSI PRESISI</h2><div class="kpis"><div class="kpi"><small>UNIT DIPROSES</small><b id="total">0</b></div><div class="kpi"><small>PASS QC</small><b id="pass">0</b></div><div class="kpi"><small>REJECT QC</small><b id="reject">0</b></div><div class="kpi"><small>STATUS LINE</small><b id="state">STANDBY</b></div></div>
+<div class="info" id="process"><b>Receiving & material preparation</b><p>Pemeriksaan material certificate, identitas lot, dimensi awal, dan kondisi permukaan sebelum machining.</p></div>
+<h3>HOTSPOT BAHAYA — KLIK MARKER MERAH</h3><div id="hazard"><p>Spindle/chuck berputar, serpihan logam, coolant mist, kebisingan, pengangkatan material, listrik/energi tersimpan, dan robot otomatis.</p></div>
+<h3>ZONA KERJA</h3><p><b style="color:#ff747b">Hot zone:</b> sel CNC/area paparan aktual. <b style="color:#ffc66b">Warm zone:</b> area transisi dan dekontaminasi. <b style="color:#66d9ed">Cold zone:</b> area dukungan terpisah dari paparan.</p>
+<h3>PPE BERDASARKAN RISIKO</h3><p>Kacamata keselamatan/face shield, pelindung pendengaran, sepatu keselamatan, pakaian kerja pas badan, serta respirator bila penilaian paparan dan program perlindungan pernapasan mensyaratkan. Jangan memakai sarung tangan dekat spindle/chuck berputar.</p>
+<h3>DONNING & DOFFING PPE</h3><div class="row"><button id="don">Donning</button><button id="doff">Doffing</button></div>
+<div class="info green" id="ppeText"><b>Donning:</b> periksa kondisi APD, kenakan sesuai urutan, pastikan fit, dan verifikasi tidak menimbulkan bahaya tersangkut.</div>
+<h3>JALANKAN LINI PRODUKSI</h3><div class="row"><button class="primary" id="start">▶ Start line</button><button id="add">＋ Add part</button><button id="reset">↻ Reset</button></div>
+<label>Probabilitas reject simulasi: <b id="pct">12%</b></label><input id="rate" type="range" min="0" max="40" value="12">
+<p class="muted">Parameter reject dan waktu proses bersifat ilustratif, bukan data pabrik.</p>
+</aside>
+<div class="steps" id="steps"><span class="step active">1 Receiving</span><span class="step">2 CNC Turning</span><span class="step">3 CNC Milling</span><span class="step">4 Deburring</span><span class="step">5 Inspection</span><span class="step">6 Cleaning</span><span class="step">7 Packing</span></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9aadb5);scene.fog=new THREE.Fog(0x9aadb5,50,105);
+const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.1,180);camera.position.set(30,28,34);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;document.getElementById('view').appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,1,0);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.49;
+scene.add(new THREE.HemisphereLight(0xe4f5ff,0x46535a,2));let sun=new THREE.DirectionalLight(0xfff0d5,2.4);sun.position.set(-20,35,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun);
+const mat=(c,m=0,r=.5)=>new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r});
+const M={floor:mat(0x9aa7aa),steel:mat(0x465b68,.6,.3),dark:mat(0x1d2b35,.5,.4),blue:mat(0x167e9d,.35,.3),yellow:mat(0xf1b43c),orange:mat(0xe77e38),white:mat(0xeaf0f2),glass:new THREE.MeshStandardMaterial({color:0x7fc5d7,transparent:true,opacity:.34}),green:mat(0x27885e),red:mat(0xc9444c),part:mat(0xb9c5c9,.8,.22),rubber:mat(0x20282e)};
+function box(p,x,y,z,w,h,d,m){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y+h/2,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
+function cyl(p,x,y,z,r,h,m){let o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,24),m);o.position.set(x,y+h/2,z);o.castShadow=true;p.add(o);return o}
+function label(t,x,y,z,c='#fff'){let a=document.createElement('canvas');a.width=512;a.height=128;let q=a.getContext('2d');q.fillStyle='#0a1b2bdc';q.beginPath();q.roundRect(5,5,502,118,18);q.fill();q.strokeStyle=c;q.lineWidth=5;q.stroke();q.fillStyle=c;q.font='bold 34px Arial';q.textAlign='center';q.textBaseline='middle';q.fillText(t,256,65);let s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(a),transparent:true,depthTest:false}));s.scale.set(5.5,1.35,1);s.position.set(x,y,z);scene.add(s);return s}
+let floor=new THREE.Mesh(new THREE.PlaneGeometry(54,38),M.floor);floor.rotation.x=-Math.PI/2;floor.position.y=-.12;floor.receiveShadow=true;scene.add(floor);let grid=new THREE.GridHelper(54,54,0x657c86,0x9cabad);grid.position.y=-.1;grid.material.transparent=true;grid.material.opacity=.2;scene.add(grid);
+// Factory shell, columns and overhead lights
+for(let x=-24;x<=24;x+=12){box(scene,x,0,-17,.2,10,.2,M.steel);box(scene,x,0,17,.2,10,.2,M.steel);let l=new THREE.PointLight(0xffedc8,1,20);l.position.set(x,9,0);scene.add(l);box(scene,x,9.8,0,2.5,.12,.45,M.white)}
+// floor zones
+function zone(x,z,w,d,c,o){let m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:o,side:THREE.DoubleSide}));m.rotation.x=-Math.PI/2;m.position.set(x,.015,z);scene.add(m)}
+zone(-3,-1,23,18,0xe34b50,.12);zone(13,-1,7,18,0xe7a03c,.14);zone(18,11,8,8,0x27a6c8,.16);
+label('HOT ZONE • CNC CELLS',-3,5,-8,'#ff7c83');label('WARM ZONE • TRANSITION',13,4,-5,'#ffc76c');label('COLD ZONE • SUPPORT',18,3,11,'#65d9ed');
+// raw material staging
+for(let i=0;i<3;i++){let x=-21+i*2.2;box(scene,x,.6,10,1.8,1.2,2,M.steel);for(let j=0;j<3;j++)cyl(scene,x-.55+j*.55,1.25,10,.24,.48,M.part)}label('RAW MATERIAL',-18,3,12);
+// CNC machine modules
+function cnc(x,z,n){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(g,-1.7,.2,0,4.5,.4,3.6,M.dark);box(g,-1.7,.6,0,4.1,3.8,3.3,M.blue);box(g,-1.7,4.35,0,4.1,.18,3.3,M.steel);box(g,-1.7,2.3,1.68,2.8,1.9,.08,M.glass);box(g,-3.15,2.3,1.75,.12,2.1,.16,M.yellow);box(g,-.25,2.3,1.75,.12,2.1,.16,M.yellow);cyl(g,-1.7,2.1,.85,.62,.85,M.steel);let chuck=cyl(g,-1.7,2.1,1.3,.4,.22,M.part);box(g,.55,1.6,1.35,.8,1.2,.18,M.dark);box(g,.55,1.75,1.46,.62,.7,.035,M.glass);label(n,x-1,5,z+2.5);return{g,chuck}}
+let lathe=cnc(-9,-8,'CNC TURNING'),mill=cnc(0,-8,'CNC MILLING');
+// coolant extraction unit
+let mist=new THREE.Group();scene.add(mist);box(mist,6,.4,-9,2,2.5,2,M.green);cyl(mist,6,2.9,-9,.42,1.5,M.steel);label('MIST COLLECTOR',6,4,-7,'#7ce0af');
+// robot cell and transparent safety enclosure
+box(scene,8,.1,-1,5,.25,5,M.steel);for(let x of [5.7,10.3])for(let z of [-3.2,1.2])box(scene,x,0,z,.12,2.8,.12,M.yellow);
+let guard=new THREE.Mesh(new THREE.BoxGeometry(4.5,2.6,4.2),new THREE.MeshStandardMaterial({color:0x7dc7d6,transparent:true,opacity:.17}));guard.position.set(8,1.4,-1);scene.add(guard);
+let robot=new THREE.Group();robot.position.set(8,.2,-1);scene.add(robot);cyl(robot,0,0,0,.6,.35,M.steel);let arm=box(robot,0,.4,0,.42,1.5,.42,M.orange);arm.rotation.z=-.35;let arm2=box(robot,.65,1.3,0,1.1,.24,.24,M.orange);arm2.rotation.z=.4;
+// deburr bench
+box(scene,-7,.55,3,5,.9,1.7,M.steel);cyl(scene,-8,1.1,3,.4,.22,M.rubber);label('DEBURRING',-7,3,4.5,'#f3d08c');
+// CMM inspection
+box(scene,8,.6,9,6,1.2,3,M.dark);box(scene,8,1.3,9,5.8,.12,2.8,M.part);box(scene,7,1.5,9,3,.15,.15,M.steel);box(scene,7,2.7,9,.15,2.5,.15,M.steel);box(scene,8.4,3.8,9,3,.15,.15,M.steel);box(scene,9.8,2.6,9,.15,2.5,.15,M.steel);label('METROLOGY / CMM',8,5,11,'#9fe2f2');
+// cleaning and packing
+box(scene,16,.5,-2,4,1,2,M.blue);box(scene,16,1.1,-2,3.7,.15,1.7,M.white);label('PART CLEANING',16,3,0,'#9fe2f2');
+box(scene,18,.5,7,4,1,2,M.green);box(scene,18,1.1,7,3.7,.15,1.7,M.white);label('PACKING / FG',18,3,9,'#9fe2f2');
+// safety equipment stations
+box(scene,21,.5,-12,2,.9,1.2,M.blue);label('PPE STATION',21,2.7,-10,'#a6e4f4');box(scene,-21,.5,-12,1.5,1,1,M.orange);label('LOTO / SPILL KIT',-21,2.7,-10,'#ffd08b');
+// workers
+function worker(x,z){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(g,-.12,.1,0,.12,.6,.13,M.dark);box(g,.12,.1,0,.12,.6,.13,M.dark);box(g,0,.35,0,.45,.65,.28,M.yellow);cyl(g,0,.98,0,.19,.24,M.part);cyl(g,0,1.13,0,.24,.1,M.yellow);return g}
+let workers=[worker(-15,1),worker(3,3),worker(12,4),worker(17,12)];
+// hazards and clickable hotspots
+let hazards=[
+['Spindle/chuck berputar','Risiko tersangkut/terseret pada bagian berputar. Eliminasi intervensi manual saat mesin bergerak; engineering enclosure/interlock; LOTO saat perawatan; PPE mata sesuai risiko.'],
+['Serpihan logam','Chips tajam dapat terlontar ke mata/wajah. Gunakan enclosure, chip conveyor, alat bantu pembersihan, dan pelindung mata/wajah.'],
+['Coolant mist / bahan kimia','Kabut coolant dapat terhirup atau kontak kulit. Evaluasi SDS; substitusi bahan lebih rendah bahaya; enclosure dan local exhaust/mist collector; housekeeping.'],
+['Kebisingan','Paparan kebisingan dapat mengganggu pendengaran. Pertimbangkan mesin lebih senyap, enclosure akustik, isolasi getaran, pemetaan kebisingan, dan hearing protection.'],
+['Pengangkatan material','Beban dan postur janggal dapat menyebabkan MSD. Hilangkan manual lift melalui transfer otomatis; gunakan hoist/lift table dan prosedur penanganan.'],
+['Listrik / energi tersimpan','Sengatan dan gerakan tak terduga saat perawatan. Isolasi energi, LOTO, verifikasi zero-energy, dan pekerjaan oleh personel kompeten.'],
+['Robot otomatis','Benturan atau terjepit di area robot. Safety fence, interlocked gate, scanner/light curtain, safe stop, dan pembatasan akses.']];
+let marks=[];hazards.forEach((h,i)=>{let x=[-9,0,6,-2,-19,-21,8][i],z=[-6,-5,-8,-11,10,-12,-1][i];let g=new THREE.Group();g.position.set(x,.2,z);let r=new THREE.Mesh(new THREE.TorusGeometry(.45,.06,8,28),new THREE.MeshBasicMaterial({color:0xff5965}));r.rotation.x=-Math.PI/2;g.add(r);let b=new THREE.Mesh(new THREE.SphereGeometry(.2,16,16),new THREE.MeshBasicMaterial({color:0xff5965}));b.position.y=.4;g.add(b);g.userData.i=i;scene.add(g);marks.push(g)});
+let ray=new THREE.Raycaster(),ptr=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',e=>{ptr.x=e.clientX/innerWidth*2-1;ptr.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(ptr,camera);let h=ray.intersectObjects(marks.flatMap(g=>g.children));if(h.length){let i=h[0].object.parent.userData.i;document.getElementById('hazard').innerHTML='<b>'+hazards[i][0]+'</b><p>'+hazards[i][1]+'</p>'}});
+const hoc=[
+{t:'ELIMINATION — physically remove the hazard',d:'Menghilangkan bahaya secara fisik. Paling efektif bila dirancang sejak awal. Contoh: hilangkan kebutuhan operator menjangkau chuck saat spindle bergerak melalui desain loading otomatis; keluarkan mesin/perangkat listrik rusak dari area operasi; hilangkan langkah proses yang tidak diperlukan.',a:[['Hilangkan intervensi manual saat mesin bergerak','Rancang loading/unloading agar operator tidak menjangkau spindle/chuck saat bergerak.'],['Keluarkan peralatan rusak','Isolasi, beri identifikasi, dan cegah penggunaan peralatan rusak/nonaktif.']]},
+{t:'SUBSTITUTION — replace the hazard',d:'Mengganti bahan atau proses dengan alternatif yang lebih rendah bahayanya setelah evaluasi teknis, mutu, kompatibilitas, dan SDS. Contoh: coolant atau bahan pembersih lebih rendah toksisitas/volatilitas; mesin lebih senyap.',a:[['Substitusi coolant','Evaluasi SDS, kompatibilitas material, performa machining, umur cairan, dan potensi paparan.'],['Substitusi bahan pembersih','Pilih bahan lebih rendah toksisitas/volatilitas yang tetap memenuhi spesifikasi kebersihan.']]},
+{t:'ENGINEERING CONTROLS — isolate people from hazard',d:'Mengendalikan bahaya pada sumber melalui enclosure, isolasi, atau rekayasa terintegrasi. Contoh: guarding/interlock CNC, local exhaust ventilation/mist collector, chip conveyor, safety fence robot, light curtain, dan peredam kebisingan.',a:[['Aktifkan enclosure/interlock CNC','Pintu akses terkunci selama siklus; pembukaan akses menghentikan gerakan berbahaya sesuai desain.'],['Aktifkan local exhaust/mist collector','Kabut coolant ditangkap dekat sumber sebelum menyebar ke zona pernapasan.'],['Aktifkan safety fence robot','Pembatas dan interlock mengendalikan akses ke area gerak robot.']]},
+{t:'ADMINISTRATIVE CONTROLS — change the way people work',d:'Mengubah prosedur, jadwal, pelatihan, akses, inspeksi, dan praktik kerja untuk menurunkan durasi/frekuensi paparan. Contoh: SOP setup, LOTO, pelatihan, inspeksi guarding, SDS, housekeeping, dan pembatasan akses.',a:[['Terapkan SOP dan pelatihan','Pelatihan start-up, operasi normal, kondisi abnormal, emergency stop, dan pelaporan bahaya.'],['Terapkan LOTO','Isolasi semua sumber energi, lock/tag, lepaskan energi tersimpan, dan verifikasi zero-energy.'],['Batasi akses hot zone','Hanya personel berwenang; gunakan rambu, marka lantai, dan pengaturan jadwal.']]},
+{t:'PPE — protect the worker with PPE',d:'Lapisan terakhir untuk risiko residual; tidak menggantikan pengendalian yang lebih efektif. Pilih berdasarkan penilaian bahaya, SDS, kesesuaian, fit, pemeliharaan, dan pelatihan.',a:[['Pelindung mata/wajah','Safety glasses atau face shield sesuai risiko serpihan/percikan; face shield tidak selalu menggantikan safety glasses.'],['Pelindung pendengaran','Earplug/earmuff sesuai hasil pengukuran dan program konservasi pendengaran.'],['Sepatu dan pakaian kerja','Sepatu keselamatan dan pakaian pas badan; hindari pakaian longgar/perhiasan dekat bagian berputar.']]}
+];
+let chosen=0,flags={};function renderHoc(i){chosen=i;document.querySelectorAll('.hoc').forEach((e,j)=>e.classList.toggle('selected',j===i));document.getElementById('hocText').innerHTML='<b>'+hoc[i].t+'</b><p>'+hoc[i].d+'</p>';let a=document.getElementById('actions');a.innerHTML='';hoc[i].a.forEach((v,j)=>{let b=document.createElement('button');b.className='action';b.textContent='＋ '+v[0];b.onclick=()=>{let k=i+'-'+j;flags[k]=!flags[k];b.classList.toggle('active',flags[k]);document.getElementById('process').innerHTML='<b>'+v[0]+'</b><p>'+v[1]+'</p><p>Status demonstrasi: <b>'+(flags[k]?'AKTIF':'TIDAK AKTIF')+'</b>. Verifikasi efektivitas harus dilakukan di fasilitas aktual.</p>';if(i===2&&j===0)guard.visible=flags[k];if(i===2&&j===1)mist.visible=flags[k];toast((flags[k]?'Pengendalian diaktifkan: ':'Pengendalian dinonaktifkan: ')+v[0])};a.appendChild(b)})}
+document.querySelectorAll('.hoc').forEach(e=>e.onclick=()=>renderHoc(+e.dataset.i));
+// production part flow
+let route=[new THREE.Vector3(-18,.7,10),new THREE.Vector3(-9,.7,-8),new THREE.Vector3(0,.7,-8),new THREE.Vector3(-7,.7,3),new THREE.Vector3(8,1.7,9),new THREE.Vector3(16,.7,-2),new THREE.Vector3(18,.7,7)];
+let names=['Receiving & material verification','CNC turning','CNC milling','Deburring','Dimensional inspection (CMM)','Part cleaning','Packing & finished goods'];
+let texts=['Verifikasi material certificate, identitas lot, dimensi awal, dan kondisi permukaan.','Turning membentuk diameter/profil. Bahaya: bagian berputar, chips, coolant mist, dan kebisingan.','Milling membentuk fitur dan permukaan presisi. Bahaya: tool berputar, serpihan, coolant, dan akses mesin.','Deburring menghilangkan burr/tepi tajam. Gunakan fixture dan alat bantu; kendalikan partikel.','Inspeksi CMM/micrometer/gauge dibandingkan drawing dan toleransi. Produk tidak sesuai diberi status reject.','Pembersihan menghilangkan coolant/partikel. Gunakan sistem tertutup, ventilasi, dan bahan sesuai SDS.','Produk lolos inspeksi diberi identitas, dilindungi, dikemas, dan masuk finished goods.'];
+let parts=[],running=false,serial=0,stat={total:0,pass:0,reject:0},rate=.12,spawn=0,goodMat=mat(0x36bd85,.5,.25),badMat=mat(0xe34d56,.4,.3);
+function stats(){total.textContent=stat.total;pass.textContent=stat.pass;reject.textContent=stat.reject;state.textContent=running?'RUNNING':'STANDBY'}
+function addPart(){serial++;let g=new THREE.Group();let c=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.85,32),M.part);c.rotation.z=Math.PI/2;g.add(c);g.position.copy(route[0]);scene.add(g);parts.push({g,stage:0,p:0,done:false,speed:.18,state:'process'});stat.total++;stats()}
+function tickPart(u,dt){if(u.done)return;let a=route[u.stage],b=route[u.stage+1];u.p+=dt*u.speed;u.g.position.lerpVectors(a,b,Math.min(1,u.p));if(u.p<1)return;u.stage++;u.p=0;document.querySelectorAll('.step').forEach((e,j)=>e.classList.toggle('active',j===u.stage));document.getElementById('process').innerHTML='<b>'+names[u.stage]+'</b><p>'+texts[u.stage]+'</p>';if(u.stage===4){if(Math.random()<rate){u.state='reject';u.g.children[0].material=badMat;u.g.position.set(12,.7,12);u.done=true;stat.reject++;toast('REJECT — DIMENSI DI LUAR TOLERANSI','bad');rejectSound()}else{u.state='pass';u.g.children[0].material=goodMat;stat.pass++;toast('PASS — PRODUK SESUAI SPESIFIKASI','good');passSound()}}if(u.stage===6&&u.state!=='reject'){u.done=true;u.g.position.set(18,.8,7)}stats()}
+document.getElementById('start').onclick=()=>{running=!running;document.getElementById('start').textContent=running?'Ⅱ Pause line':'▶ Start line';stats();if(running)machineSound()};document.getElementById('add').onclick=addPart;document.getElementById('reset').onclick=()=>{parts.forEach(p=>scene.remove(p.g));parts=[];stat={total:0,pass:0,reject:0};serial=0;running=false;spawn=0;document.getElementById('start').textContent='▶ Start line';stats();toast('Lini produksi di-reset')};
+document.getElementById('rate').oninput=e=>{rate=+e.target.value/100;pct.textContent=e.target.value+'%'};
+// Donning/doffing instructions: industrial adaptation; PPE selected from task risk assessment.
+document.getElementById('don').onclick=()=>ppeText.innerHTML='<b>DONNING PPE</b><p>1. Periksa APD, kebersihan, ukuran, dan kerusakan. 2. Kenakan pakaian kerja pas badan dan sepatu keselamatan. 3. Kenakan pelindung mata dan pendengaran sesuai bahaya. 4. Periksa fit respirator bila diwajibkan program perlindungan pernapasan. 5. Pastikan APD tidak menimbulkan risiko tersangkut pada mesin.</p>';
+document.getElementById('doff').onclick=()=>ppeText.innerHTML='<b>DOFFING PPE</b><p>1. Keluar dari area paparan dan ikuti prosedur dekontaminasi bila diperlukan. 2. Lepaskan APD tanpa memindahkan kontaminan ke kulit/pakaian. 3. Pisahkan APD pakai ulang untuk pembersihan dan APD sekali pakai ke wadah sesuai jenis limbah. 4. Lakukan kebersihan tangan. 5. Laporkan APD rusak atau insiden paparan.</p>';
+// Web Audio API synthesized sound effects; user activates audio explicitly.
+let ac=null,master=null,audioOn=false,amb=[];function initAudio(){if(ac)return;let A=window.AudioContext||window.webkitAudioContext;if(!A)return;ac=new A();master=ac.createGain();master.gain.value=.0001;master.connect(ac.destination)}
+function tone(f,d=.15,type='sine',v=.1,delay=0){if(!audioOn||!ac)return;let o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+delay;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.03)}
+function machineSound(){tone(55,.8,'sawtooth',.035);tone(110,.6,'triangle',.025,.1);tone(220,.4,'sine',.018,.2)}
+function rejectSound(){tone(880,.2,'square',.19);tone(660,.2,'square',.19,.24);tone(880,.32,'square',.2,.5)}
+function passSound(){tone(660,.12,'sine',.14);tone(880,.14,'sine',.15,.14);tone(1175,.22,'sine',.17,.3)}
+document.getElementById('audio').onclick=async()=>{initAudio();if(!ac)return;if(ac.state==='suspended')await ac.resume();audioOn=!audioOn;master.gain.setTargetAtTime(audioOn ? .42 : .0001,ac.currentTime,.15);document.getElementById('audio').textContent=audioOn?'🔊 Audio on':'🔇 Audio off';if(audioOn){tone(500,.12,'sine',.08);toast('Audio mesin dan alarm aktif','good')}};
+let t=0;const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);t+=dt;if(running){spawn+=dt;if(spawn>5&&parts.filter(p=>!p.done).length<5){spawn=0;addPart()}}parts.forEach(p=>tickPart(p,dt));if(parts.length>24){for(let i=parts.length-1;i>=0&&parts.length>19;i--)if(parts[i].done){scene.remove(parts[i].g);parts.splice(i,1)}}lathe.chuck.rotation.z+=running?dt*4:dt*.15;mill.chuck.rotation.z+=running?dt*3:dt*.1;robot.rotation.y=Math.sin(t)*.4;workers[1].position.x=3+Math.sin(t*.5)*.4;marks.forEach((g,i)=>{g.position.y=.2+Math.sin(t*2+i)*.08;g.children[0].scale.setScalar(1+.12*Math.sin(t*3+i))});controls.update();renderer.render(scene,camera)}
+function toast(s,k=''){let e=document.getElementById('toast');e.textContent=s;e.className='show '+k;clearTimeout(e._t);e._t=setTimeout(()=>e.className='',1900)}
+document.getElementById('labels').onclick=()=>scene.traverse(o=>{if(o.isSprite)o.visible=!o.visible});
+document.getElementById('top').onclick=()=>{camera.position.set(0,48,.1);controls.target.set(0,0,0)};
+document.getElementById('resetView').onclick=()=>{camera.position.set(30,28,34);controls.target.set(0,1,0)};
+addPart();stats();renderHoc(0);animate();
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
